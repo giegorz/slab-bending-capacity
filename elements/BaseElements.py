@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from math import pi
-from elements.units import Quantity, ureg
+from elements.units import Quantity, ureg, as_mm
+
 
 @dataclass
 class BaseElement:
@@ -9,6 +10,10 @@ class BaseElement:
 @dataclass
 class ReinforcementBar(BaseElement):
     d: Quantity
+
+    @classmethod
+    def from_quantity(cls, d: Quantity) -> ReinforcementBar:
+        return cls(d= as_mm(d))
 
     @property
     def area(self) -> Quantity:
