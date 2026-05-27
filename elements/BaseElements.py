@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from math import pi
-from elements.units import Quantity, ureg, as_mm
+from elements.units import Quantity, ureg
 
 
 @dataclass
@@ -9,14 +9,10 @@ class BaseElement:
 
 @dataclass
 class ReinforcementBar(BaseElement):
-    d: Quantity
-
-    @classmethod
-    def from_quantity(cls, d: Quantity) -> ReinforcementBar:
-        return cls(d= as_mm(d))
+    d: float
 
     @property
-    def area(self) -> Quantity:
+    def area(self) -> float:
         return pi * (self.d**2) / 4
 
 @dataclass
@@ -25,7 +21,7 @@ class ReinforcementLayer(BaseElement):
     number_of_bars: list[int] | int = field(default_factory=list)
 
     @property
-    def area(self) -> Quantity:
+    def area(self) -> float:
         if isinstance(self.bars, ReinforcementBar) and isinstance(self.number_of_bars, int):
             bars = [self.bars]
             nums = [self.number_of_bars]
@@ -40,9 +36,9 @@ class ReinforcementLayer(BaseElement):
 
 @dataclass
 class Slab(BaseElement):
-    height: Quantity
-    width: Quantity
+    height: float
+    width: float
 
     @property
-    def area(self) -> Quantity:
+    def area(self) -> float:
         return self.height * self.width

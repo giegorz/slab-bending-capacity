@@ -1,24 +1,44 @@
 import pint
+from enum import Enum
+import logging
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
+
 
 ureg= pint.UnitRegistry()
 Quantity = ureg.Quantity
 
-#--------------------------
-#   Helpers
-#--------------------------
+class QuantityType(Enum):
+    LENGTH = ('[length]', 'mm')
+    AREA = ('[length]^2', 'mm**2')
+    PRESSURE = ('[pressure]', 'MPa')
+    FORCE = ('[force]', 'N')
 
-def as_mm(x: int | float | Quantity) -> float:
-    if isinstance(x, Quantity):
-        return x.to("mm").magnitude
-    return float(x)
+    def __init__(self, dim, unit):
+        self.dim = dim
+        self.unit = unit
+
+    def matches(self, q):
+        return q.check(self.dim)
+
+    def convert(self, q):
+        return q.to(self.unit).magnitude
 
 
-def as_MPa(x: int | float | Quantity) -> float:
-    if isinstance(x, Quantity):
-        return x.to("MPa").magnitude
-    return float(x)
+def from_Quantity(quantity: Quantity) -> float:
+    if not isinstance(quantity, Quantity):
+        return quantity
 
-def as_N(x: int | float | Quantity) -> float:
-    if isinstance(x, Quantity):
-        return x.to("N").magnitude
-    return float(x)
+    for qt in QuantityType:
+        if qt.matches(quantity):
+            return qt.convert(quantity)
+
+    logger.info(
+        f"{quantity} not recognized, base units are {quantity.to_base_units().units}"
+    )
+    return quantity.to_base_units().magnitude
