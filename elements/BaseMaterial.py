@@ -1,13 +1,11 @@
-from abc import abstractmethod, ABC
-from dataclasses import dataclass, field
-from typing import Callable
+import __future__
 
 import numpy as np
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
 
-from elements.units import *
-
+from abc import abstractmethod, ABC
+from dataclasses import dataclass, field
+from matplotlib.figure import Figure
 
 @dataclass
 class BaseMaterial(ABC):
@@ -26,8 +24,8 @@ class BaseMaterial(ABC):
 
         fig, ax = plt.subplots()
 
-        if isinstance(self, SteelCS454):
-            eps_end = 0.01
+        # default eps_end
+        eps_end = 0.01 if isinstance(self, SteelCS454) else eps_end
 
         x = np.linspace(0, eps_end, number_of_points)
         y = self.strain_stress(x)
@@ -81,10 +79,12 @@ class SteelCS454(BaseMaterial):
 class ConcreteCS454(BaseMaterial):
     fcu: float
     gamma_m: float = 1.5
+    eps_max: float = 0.0035
 
     def strain_stress(self, eps: float | np.ndarray) -> float | np.ndarray:
 
         eps = np.asarray(eps)
+        mask_zero = eps < 0
 
         strain_parabolic = 2.44e-4 * np.sqrt(self.fcu / self.gamma_m)
         stress_linear = 0.67* self.fcu / self.gamma_m
@@ -93,12 +93,13 @@ class ConcreteCS454(BaseMaterial):
                       - ((5500**2)/2.68) * eps **2
 
         mask_parabolic = eps < strain_parabolic
-        mask_linear = (eps >= strain_parabolic) & (eps <= 0.0035)
+        mask_linear = (eps >= strain_parabolic) & (eps <= self.eps_max)
 
         result = np.zeros_like(eps)
 
         result[mask_parabolic] = f_parabolic[mask_parabolic]
         result[mask_linear] = stress_linear
+        result[mask_zero] = 0
 
         return result
 
