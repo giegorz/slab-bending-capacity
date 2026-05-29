@@ -1,3 +1,7 @@
+import timeit
+from functools import wraps
+
+from decorator import decorator
 from matplotlib.figure import Figure
 
 from elements.BaseElements import *
@@ -15,49 +19,54 @@ def plot(x, y)  -> Figure:
     plt.plot(x, y)
     return fig
 
+def time_this(func, n: int = 1):
+    def decorator(func):
+        @wraps(func)
+        def wrapper(*args, **kwargs):
+            t = timeit.timeit(lambda: func(*args, **kwargs), number= n)
+            print(f"{func.__name__}: {t}")
+            return None
+        return wrapper
+    return decorator
 
 def main ():
-    bar = ReinforcementBar(from_Quantity(12*ureg.mm))
-    # bar2 = ReinforcementBar(12)
-    # layer = ReinforcementLayer([bar, bar2], [10, 5])
-    # print(bar.d, bar2.d)
-    # print(layer.area)
-    # steel = SteelCS454(435)
-    #
-    #
-    # concrete = ConcreteCS454(fcu= from_Quantity(35*ureg.MPa))
-    # print(concrete.E)
-    #
-    # x = np.linspace(0, 0.0035, 25)
-    # y = concrete.strain_stress(x)
-    #
-    # print(10 * "+-")
-    #
-    # slab = Slab(from_Quantity(720*ureg.mm), from_Quantity(1000*ureg.mm))
-    # print(slab.area)
-    #
-    # xz = np.linspace(0, 0.010, 500)
-    # z = steel.strain_stress(xz)
-    #
-    #
-    # steel.plot_strain_stress().show()
-    # concrete.plot_strain_stress().show()
 
-    reinforcement_layer = ReinforcementLayer(bar, 10)
-    slab = Slab(460, 1000)
-    steel = SteelCS454(435)
-    concrete = ConcreteCS454(30)
-    section = Section(slab, concrete, reinforcement_layer, steel)
-    strains = section.strain_distribution(46)
-    print(section.calcualte_Fc(100))
+    slab = Slab(1000, 1000)
+    concrete_material= ConcreteCS454(30)
+    reinforcement_material = SteelCS454(500)
+    reinforcement = ReinforcementLayer(ReinforcementBar(35), number_of_bars=10, z_from_top=950)
 
-    x = np.linspace(1, 460, 2000)
-    y = section.strain_distribution(460)
-    z = section.concrete_material.strain_stress(y)
+    section = Section(slab= slab,
+                      concrete_material= concrete_material,
+                      reinforcement_material= reinforcement_material,
+                      reinforcement_layers= reinforcement,
+                      number_of_slices=10000)
+    section.find_equilibrium()
+    precise = section.compressive_zone
 
-    fig, ax = plt.subplots()
-    plt.plot(x, z)
-    plt.grid()
+    # section.find_equilibrium()
+    # x = section.compressive_zone
+    # print(x)
+    # print(x / 3)
+    # print(section.Fc_distance_from_top())
+
+    x = range(100)[2:]
+    y = []
+
+    for i in x:
+        s = Section(slab= slab,
+                      concrete_material= concrete_material,
+                      reinforcement_material= reinforcement_material,
+                      reinforcement_layers= reinforcement,
+                      number_of_slices=i)
+        s.find_equilibrium()
+
+        y.append(1 - s.compressive_zone/ precise)
+
+
+    print(y)
+    plt.plot(x,y)
+
     plt.show()
 
 

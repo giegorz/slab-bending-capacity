@@ -1,0 +1,13 @@
+{
+  "reinforcement": {
+    "fyk": 435,
+    "gamma_m": 1.15
+  },
+  "concrete": {
+    "fcu": 30
+  },
+  "slab": {
+    "height": 1000,
+    "width": 550
+  }
+}
